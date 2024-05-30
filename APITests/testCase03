@@ -1,0 +1,94 @@
+package qtriptest.APITests;
+
+// import io.netty.handler.codec.json.JsonObjectDecoder;
+import io.restassured.RestAssured;
+// import io.restassured.http.ContentType;
+// import io.restassured.module.jsv.JsonSchemaValidator;
+import io.restassured.path.json.JsonPath;
+import io.restassured.response.Response;
+// import io.restassured.specification.RequestSpecification;
+import org.json.JSONObject;
+// import org.openqa.selenium.json.Json;
+import org.testng.Assert;
+// import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+// import java.io.File;
+// import java.util.LinkedHashMap;
+import java.util.UUID;
+
+public class testCase_API_03 {
+
+    String token;
+    String userID;
+
+    @Test
+    public void testCaseRegisterLoginReservation() {
+        RestAssured.baseURI = "https://content-qtripdynamic-qa-backend.azurewebsites.net";
+        RestAssured.basePath = "/api/v1/register";
+
+        // JSONObject--> unordered data structure
+        // new class
+        JSONObject obj = new JSONObject();
+        String email = "sheetal" + UUID.randomUUID() + "@gmail.com";
+        String password = UUID.randomUUID().toString();
+        String confirmpassword = password;
+
+        obj.put("email", email);
+        obj.put("password", password);
+        obj.put("confirmpassword", confirmpassword);
+
+        Response resp = RestAssured.given().contentType("application/json").body(obj.toString())
+                .when().post();
+        Assert.assertEquals(resp.getStatusCode(), 201);
+
+        // login
+        RestAssured.basePath = "/api/v1/login";
+        obj.remove("confirmpassword");
+
+        resp = RestAssured.given().contentType("application/json").body(obj.toString()).log().all()
+                .when().post();
+        Assert.assertEquals(resp.getStatusCode(), 201);
+
+        JsonPath jp = new JsonPath(resp.body().asString());
+        token = jp.getString("data.token");
+        System.out.println("token--------------------------------------" + token);
+        userID = jp.getString("data.id");
+        System.out.println("userID--------------------------------------" + userID);
+
+
+        Assert.assertTrue(jp.getBoolean("success"));
+        Assert.assertNotNull(jp.getString("data.token"));
+        Assert.assertNotNull(jp.getString("data.id"));
+
+
+        // @Test
+        // public void testCase03() {
+
+        // register and login before making new reservations
+
+        // RestAssured.baseURI = "https://content-qtripdynamic-qa-backend.azurewebsites.net";
+        // RestAssured.basePath = "/api/v1/reservations/new";
+
+        // format token as bearer token
+        token = "Bearer " + token;
+
+        JSONObject object = new JSONObject();
+        System.out.println("userID" + userID);
+
+        object.put("userID", userID);
+        object.put("name", "sheetal");
+        object.put("date", "2024-15-09");
+        object.put("person", "2");
+        object.put("adventure", "2447910730");
+
+        System.out.println("Reservation Request Payload: " + object.toString());
+        System.out.println("Authorization Header: " + token);
+
+        Response response = RestAssured.given().contentType("application/json")
+                .header("Authorization", token).body(object.toString()).log().all().when()
+                .post("/api/v1/reservations/new");
+
+        System.out.println("Reservation Response: " + response.getBody().asString());
+    }
+}
