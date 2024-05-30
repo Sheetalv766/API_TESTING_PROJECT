@@ -1,0 +1,55 @@
+package qtriptest.APITests;
+
+import io.restassured.http.ContentType;
+import org.json.JSONArray;
+// import io.restassured.module.jsv.JsonSchemaValidator;
+// import io.restassured.path.json.JsonPath;
+// import io.restassured.response.ResponseBody;
+// import org.json.JSONObject;
+import org.testng.Assert;
+import org.testng.annotations.*;
+// import org.testng.asserts.SoftAssert;
+// import io.restassured.http.Method;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.RestAssured;
+
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.UUID;
+
+public class testCase_API_02 {
+
+    @Test
+    public void testCase02() {
+        RestAssured.baseURI = "https://content-qtripdynamic-qa-backend.azurewebsites.net";
+        RestAssured.basePath = "/api/v1/cities?q=beng";
+
+        // request object
+        RequestSpecification http = RestAssured.given();
+        http.contentType(ContentType.JSON);
+
+        // request parameters
+        // http.param("q", "beng");
+
+        // send the GET request
+        Response response = http.get(RestAssured.baseURI + RestAssured.basePath);
+
+        // validate response status code --> 200
+        int statusCode = response.getStatusCode();
+        Assert.assertEquals(statusCode, 200, "Status code not match");
+
+        // convert to JSON object
+        // JsonPath jsonResp = response.jsonPath();
+
+        // validate result is an array of length 1
+        // oot of the JSON structure --> $ --> root
+        int resLen = response.jsonPath().getList("$").size();
+        Assert.assertEquals(resLen, 1, "Result array length is not same as expected");
+
+        // validate the Description should contain "100+ Places"
+        String des = response.jsonPath().getString("[0].description");
+        Assert.assertEquals(des, "100+ Places", "Doesn't match");
+
+    }
+}
